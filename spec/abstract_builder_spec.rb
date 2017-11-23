@@ -14,6 +14,18 @@ RSpec.describe AbstractBuilder do
 
       expect(subject.data!).to eq(KEY: "value")
     end
+
+    it "inherits the global format key by default" do
+      begin
+        AbstractBuilder.format_key! { |key| key.upcase }
+
+        subject.set! :key, "value"
+
+        expect(subject.data!).to eq(KEY: "value")
+      ensure
+        AbstractBuilder.format_key!
+      end
+    end
   end
 
   describe "#ignore_value!" do
@@ -24,6 +36,19 @@ RSpec.describe AbstractBuilder do
       subject.set! :presence, true
 
       expect(subject.data!).to eq(presence: true)
+    end
+
+    it "inherits the global ignore value by default" do
+      begin
+        AbstractBuilder.ignore_value! { |value| value.nil? }
+
+        subject.set! :absence, nil
+        subject.set! :presence, true
+
+        expect(subject.data!).to eq(presence: true)
+      ensure
+        AbstractBuilder.ignore_value!
+      end
     end
   end
 

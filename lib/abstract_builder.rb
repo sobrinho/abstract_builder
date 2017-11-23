@@ -1,6 +1,19 @@
 class AbstractBuilder
+  @@format_key = nil
+  @@ignore_value = nil
+
+  def self.format_key!(&block)
+    @@format_key = block
+  end
+
+  def self.ignore_value!(&block)
+    @@ignore_value = block
+  end
+
   def initialize
     @stack = []
+    @format_key = @@format_key
+    @ignore_value = @@ignore_value
   end
 
   def format_key!(&block)
