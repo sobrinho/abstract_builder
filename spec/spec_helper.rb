@@ -12,3 +12,25 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 end
+
+class Person
+  def name
+    "John Doe"
+  end
+
+  def born
+    "September 23, 1926"
+  end
+
+  protected
+
+  def aged
+    40
+  end
+
+  private
+
+  def died
+    "July 17, 1967"
+  end
+end
