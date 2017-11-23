@@ -91,7 +91,7 @@ class AbstractBuilder
   end
 
   def _inherit
-    builder = AbstractBuilder.new
+    builder = self.class.new
     builder.format_key!(&@format_key)
     builder.ignore_value!(&@ignore_value)
     builder

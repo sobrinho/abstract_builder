@@ -198,4 +198,21 @@ RSpec.describe AbstractBuilder do
       }.to raise_error(ArgumentError, /Expected 1 argument without a block, 0 arguments with a block or 1 argument with a block.+Received 2 arguments with a block./m)
     end
   end
+
+  describe "inheritance" do
+    let(:builder) { Class.new(AbstractBuilder) }
+    let(:subject) { builder.new }
+
+    it "blocks uses the same constructor" do
+      subject.block! :block do |block|
+        expect(block).to be_instance_of builder
+      end
+    end
+
+    it "arrays uses the same constructor" do
+      subject.array! :array, [1, 2, 3] do |array|
+        expect(array).to be_instance_of builder
+      end
+    end
+  end
 end
