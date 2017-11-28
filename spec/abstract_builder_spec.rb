@@ -229,7 +229,7 @@ RSpec.describe AbstractBuilder do
     end
 
     it "arrays uses the same constructor" do
-      subject.array! :array, [1, 2, 3] do |array|
+      subject.array! :array, [1, 2, 3] do |array, _item|
         expect(array).to be_instance_of builder
       end
     end
