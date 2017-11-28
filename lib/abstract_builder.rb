@@ -37,7 +37,7 @@ class AbstractBuilder
   end
 
   def set!(key, value)
-    @stack << [:set, key, value]
+    @stack << [key, value]
   end
 
   def merge!(value)
@@ -83,14 +83,9 @@ class AbstractBuilder
   def data!
     data = {}
 
-    @stack.each do |(command, key, value)|
-      case command
-      when :set
-        key = _format_key(key)
-        data[key] = value unless _ignore_value?(value)
-      else
-        raise ArgumentError, "Unexpected command: #{command.inspect}"
-      end
+    @stack.each do |(key, value)|
+      key = _format_key(key)
+      data[key] = value unless _ignore_value?(value)
     end
 
     data
