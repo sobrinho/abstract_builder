@@ -35,13 +35,11 @@ class AbstractBuilder
   end
 
   def block!(key, &block)
-    value = -> {
-      builder = _inherit
-      block.call(builder)
-      builder.data!
-    }
+    builder = _inherit
+    block.call(builder)
+    value = builder.data!
 
-    @stack << [:lambda, key, value]
+    set! key, value
   end
 
   def array!(key, collection, &block)
@@ -63,8 +61,6 @@ class AbstractBuilder
       case command
       when :set
         data[key] = value unless _ignore_value?(value)
-      when :lambda
-        data[key] = value.call
       else
         raise ArgumentError, "Unexpected command: #{command.inspect}"
       end

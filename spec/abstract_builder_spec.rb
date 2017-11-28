@@ -71,17 +71,11 @@ RSpec.describe AbstractBuilder do
 
   describe "#block!" do
     it "sets the block result as value of the given key" do
-      called = false
-
       subject.block! :meta do |meta|
-        called = true
-
         meta.set! :key, "value"
       end
 
-      expect(called).to be false
       expect(subject.data!).to eq(meta: { key: "value" })
-      expect(called).to be true
     end
 
     context "using format key" do
