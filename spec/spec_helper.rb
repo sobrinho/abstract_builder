@@ -40,7 +40,19 @@ class NaiveCache
     @cache = {}
   end
 
-  def fetch(key, _options = nil, &block)
+  def fetch(key, _options, &block)
     @cache[key] ||= block.call
+  end
+
+  def fetch_multi(*keys, options, &block)
+    result = {}
+
+    keys.each do |key|
+      result[key] = fetch(key, options) do
+        block.call(key)
+      end
+    end
+
+    result
   end
 end

@@ -52,32 +52,38 @@ RSpec.describe AbstractBuilder do
     it "caches using the given cache store" do
       subject.cache_store! cache_store
 
-      expect(cache_store).to receive(:fetch).with([:abstract_builder, :v1, :cache_key], nil).and_call_original
+      expect(cache_store).to receive(:fetch_multi).with("abstract_builder/v1/cache_key", {}).and_call_original
 
       subject.cache! :cache_key do |builder|
         builder.cache "hit"
       end
+
+      subject.data!
     end
 
     it "caches using the given options" do
       subject.cache_store! cache_store
 
-      expect(cache_store).to receive(:fetch).with([:abstract_builder, :v1, :cache_key], option: true).and_call_original
+      expect(cache_store).to receive(:fetch_multi).with("abstract_builder/v1/cache_key", option: true).and_call_original
 
       subject.cache! :cache_key, option: true do |builder|
         builder.cache "hit"
       end
+
+      subject.data!
     end
 
     it "inherits the global ignore value by default" do
       begin
         AbstractBuilder.cache_store! cache_store
 
-        expect(cache_store).to receive(:fetch).with([:abstract_builder, :v1, :cache_key], nil).and_call_original
+        expect(cache_store).to receive(:fetch_multi).with("abstract_builder/v1/cache_key", {}).and_call_original
 
         subject.cache! :cache_key do |builder|
           builder.cache "hit"
         end
+
+        subject.data!
       ensure
         AbstractBuilder.cache_store! AbstractBuilder::NullCache.new
       end
@@ -220,27 +226,44 @@ RSpec.describe AbstractBuilder do
 
     context "using cache store" do
       it "inherits the parent cache store" do
-        subject.cache_store! NaiveCache.new
+        driver = NaiveCache.new
 
-        subject.cache! :outside_cache_key do |builder|
+        # cache miss
+        builder = described_class.new
+        builder.cache_store! driver
+
+        builder.cache! :outside_cache_key do |builder|
           builder.outside_cache "hit"
         end
 
-        subject.cache! :outside_cache_key do |builder|
-          builder.outside_cache "miss"
-        end
-
-        subject.block! :meta do |meta|
+        builder.block! :meta do |meta|
           meta.cache! :inside_cache_key do |builder|
             builder.inside_cache "hit"
           end
+        end
 
+        expect(builder.data!).to eq(
+          outside_cache: "hit",
+          meta: {
+            inside_cache: "hit"
+          }
+        )
+
+        # cache hit
+        builder = described_class.new
+        builder.cache_store! driver
+
+        builder.cache! :outside_cache_key do |builder|
+          builder.outside_cache "miss"
+        end
+
+        builder.block! :meta do |meta|
           meta.cache! :inside_cache_key do |builder|
             builder.inside_cache "miss"
           end
         end
 
-        expect(subject.data!).to eq(
+        expect(builder.data!).to eq(
           outside_cache: "hit",
           meta: {
             inside_cache: "hit"
@@ -249,33 +272,53 @@ RSpec.describe AbstractBuilder do
       end
 
       it "do not leaks the ignore value to the parent" do
-        subject.cache_store! AbstractBuilder::NullCache.new
+        null_driver = AbstractBuilder::NullCache.new
+        naive_driver = NaiveCache.new
 
-        subject.cache! :outside_cache_key do |builder|
-          builder.outside_cache "hit"
-        end
+        # cache miss
+        builder = described_class.new
+        builder.cache_store! null_driver
 
-        subject.cache! :outside_cache_key do |builder|
-          builder.outside_cache "miss"
-        end
-
-        subject.block! :meta do |meta|
-          meta.cache_store! NaiveCache.new
+        builder.block! :meta do |meta|
+          meta.cache_store! naive_driver
 
           meta.cache! :inside_cache_key do |builder|
             builder.inside_cache "hit"
           end
+        end
+
+        builder.cache! :outside_cache_key do |builder|
+          builder.outside_cache "hit"
+        end
+
+        expect(builder.data!).to eq(
+          meta: {
+            inside_cache: "hit"
+          },
+          outside_cache: "hit"
+        )
+
+        # cache hit
+        builder = described_class.new
+        builder.cache_store! null_driver
+
+        builder.block! :meta do |meta|
+          meta.cache_store! naive_driver
 
           meta.cache! :inside_cache_key do |builder|
             builder.inside_cache "miss"
           end
         end
 
-        expect(subject.data!).to eq(
-          outside_cache: "miss",
+        builder.cache! :outside_cache_key do |builder|
+          builder.outside_cache "miss"
+        end
+
+        expect(builder.data!).to eq(
           meta: {
             inside_cache: "hit"
-          }
+          },
+          outside_cache: "miss"
         )
       end
     end
@@ -303,17 +346,27 @@ RSpec.describe AbstractBuilder do
 
   describe "#cache!" do
     it "caches the given block" do
-      subject.cache_store! NaiveCache.new
+      driver = NaiveCache.new
 
-      subject.cache! :cache_key do |cache|
-        cache.cache "miss"
-      end
+      # cache miss
+      builder = described_class.new
+      builder.cache_store! driver
 
-      subject.cache! :cache_key do |cache|
+      builder.cache! :cache_key do |cache|
         cache.cache "hit"
       end
 
-      expect(subject.data!).to eq(cache: "miss")
+      expect(builder.data!).to eq(cache: "hit")
+
+      # cache hit
+      builder = described_class.new
+      builder.cache_store! driver
+
+      builder.cache! :cache_key do |cache|
+        cache.cache "miss"
+      end
+
+      expect(builder.data!).to eq(cache: "hit")
     end
   end
 

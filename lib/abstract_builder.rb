@@ -1,4 +1,5 @@
 require 'abstract_builder/null_cache'
+require 'abstract_builder/lazy_cache'
 
 class AbstractBuilder
   @@format_key = nil
@@ -21,6 +22,7 @@ class AbstractBuilder
     @format_key = @@format_key
     @ignore_value = @@ignore_value
     @cache_store = @@cache_store
+    @lazy_cache = LazyCache.new(@@cache_store)
     @stack = []
   end
 
@@ -34,6 +36,7 @@ class AbstractBuilder
 
   def cache_store!(cache_store)
     @cache_store = cache_store
+    @lazy_cache = LazyCache.new(cache_store)
   end
 
   def set!(key, value)
@@ -70,14 +73,14 @@ class AbstractBuilder
     set! key, values
   end
 
-  def cache!(key, options = nil, &block)
-    value = @cache_store.fetch([:abstract_builder, :v1, *key], options) do
+  def cache!(cache_key, options = {}, &block)
+    cache_key = _compute_cache_key(cache_key)
+
+    @lazy_cache.add(cache_key, options) do
       builder = _inherit
       block.call(builder)
       builder.data!
     end
-
-    merge! value
   end
 
   def data!
@@ -86,6 +89,10 @@ class AbstractBuilder
     @stack.each do |(key, value)|
       key = _format_key(key)
       data[key] = value unless _ignore_value?(value)
+    end
+
+    @lazy_cache.resolve.each do |value|
+      data.merge!(value)
     end
 
     data
@@ -131,6 +138,10 @@ class AbstractBuilder
     builder.ignore_value!(&@ignore_value)
     builder.cache_store!(@cache_store)
     builder
+  end
+
+  def _compute_cache_key(key)
+    [:abstract_builder, :v1, *key].join("/".freeze)
   end
 
   def _ignore_value?(value)
