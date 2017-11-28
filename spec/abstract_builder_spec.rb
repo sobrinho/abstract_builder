@@ -1,12 +1,4 @@
 RSpec.describe AbstractBuilder do
-  describe "#set!" do
-    it "sets the key and value" do
-      subject.set! :key, "value"
-
-      expect(subject.data!).to eq(key: "value")
-    end
-  end
-
   describe "#format_key!" do
     it "formats the key" do
       subject.format_key! { |key| key.upcase }
@@ -49,6 +41,22 @@ RSpec.describe AbstractBuilder do
       ensure
         AbstractBuilder.ignore_value!
       end
+    end
+  end
+
+  describe "#set!" do
+    it "sets the key and value" do
+      subject.set! :key, "value"
+
+      expect(subject.data!).to eq(key: "value")
+    end
+  end
+
+  describe "#merge!" do
+    it "merges the given hash" do
+      subject.merge! key: "value"
+
+      expect(subject.data!).to eq(key: "value")
     end
   end
 

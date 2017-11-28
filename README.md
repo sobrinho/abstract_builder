@@ -26,6 +26,7 @@ AbstractBuilder gives you a simple DSL for declaring structures:
 builder = AbstractBuilder.new
 builder.(company, :name, :created_at, :updated_at)
 builder.size company.employees.count
+builder.merge! company.metadata
 
 builder.address do |address_builder|
   address_builder.street company.address.street
@@ -43,6 +44,7 @@ builder.data!
   :created_at => "...",
   :updated_at => "...",
   :size => "...",
+  :metadata => { ... },
   :address => {
     :street => "...",
     :number => "..."
