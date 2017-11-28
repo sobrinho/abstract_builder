@@ -29,7 +29,9 @@ class AbstractBuilder
   end
 
   def merge!(value)
-    @stack << [:merge, value]
+    value.each_pair do |key, value|
+      set! key, value
+    end
   end
 
   def call(object, *keys)
@@ -64,8 +66,6 @@ class AbstractBuilder
       when :set
         key = _format_key(key)
         data[key] = value unless _ignore_value?(value)
-      when :merge
-        data.merge!(key)
       else
         raise ArgumentError, "Unexpected command: #{command.inspect}"
       end

@@ -58,6 +58,24 @@ RSpec.describe AbstractBuilder do
 
       expect(subject.data!).to eq(key: "value")
     end
+
+    it "formats keys of the given hash" do
+      subject.format_key! { |key| key.upcase }
+
+      subject.merge! key: true
+
+      expect(subject.data!).to eq(
+        KEY: true
+      )
+    end
+
+    it "ignores values of the given hash" do
+      subject.ignore_value! { |value| value.nil? }
+
+      subject.merge! absence: nil, presence: true
+
+      expect(subject.data!).to eq(presence: true)
+    end
   end
 
   describe "#call" do
