@@ -25,11 +25,13 @@ class AbstractBuilder
   end
 
   def set!(key, value)
-    @stack << [key, value]
+    @stack << [:set, key, value]
   end
 
   def call(object, *keys)
-    @stack.concat keys.map { |key| [key, object.public_send(key)] }
+    keys.each do |key|
+      set! key, object.public_send(key)
+    end
   end
 
   def block!(key, &block)
@@ -39,7 +41,7 @@ class AbstractBuilder
       builder.data!
     }
 
-    @stack << [key, value]
+    @stack << [:lambda, key, value]
   end
 
   def array!(key, collection, &block)
@@ -49,17 +51,23 @@ class AbstractBuilder
       builder.data!
     end
 
-    @stack << [key, values]
+    set! key, values
   end
 
   def data!
     data = {}
 
-    @stack.each do |(key, value)|
+    @stack.each do |(command, key, value)|
       key = _format_key(key)
-      value = _compute_value(value)
 
-      data[key] = value unless _ignore_value?(value)
+      case command
+      when :set
+        data[key] = value unless _ignore_value?(value)
+      when :lambda
+        data[key] = value.call
+      else
+        raise ArgumentError, "Unexpected command: #{command.inspect}"
+      end
     end
 
     data
@@ -97,10 +105,6 @@ class AbstractBuilder
 
   def _format_key(key)
     @format_key ? @format_key.call(key) : key
-  end
-
-  def _compute_value(value)
-    value.respond_to?(:call) ? value.call : value
   end
 
   def _inherit
