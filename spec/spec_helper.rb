@@ -34,3 +34,13 @@ class Person
     "July 17, 1967"
   end
 end
+
+class NaiveCache
+  def initialize
+    @cache = {}
+  end
+
+  def fetch(key, _options = nil, &block)
+    @cache[key] ||= block.call
+  end
+end

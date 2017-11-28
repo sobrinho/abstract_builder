@@ -44,6 +44,46 @@ RSpec.describe AbstractBuilder do
     end
   end
 
+  describe "#cache_store!" do
+    let :cache_store do
+      AbstractBuilder::NullCache.new
+    end
+
+    it "caches using the given cache store" do
+      subject.cache_store! cache_store
+
+      expect(cache_store).to receive(:fetch).with([:abstract_builder, :v1, :cache_key], nil).and_call_original
+
+      subject.cache! :cache_key do |builder|
+        builder.cache "hit"
+      end
+    end
+
+    it "caches using the given options" do
+      subject.cache_store! cache_store
+
+      expect(cache_store).to receive(:fetch).with([:abstract_builder, :v1, :cache_key], option: true).and_call_original
+
+      subject.cache! :cache_key, option: true do |builder|
+        builder.cache "hit"
+      end
+    end
+
+    it "inherits the global ignore value by default" do
+      begin
+        AbstractBuilder.cache_store! cache_store
+
+        expect(cache_store).to receive(:fetch).with([:abstract_builder, :v1, :cache_key], nil).and_call_original
+
+        subject.cache! :cache_key do |builder|
+          builder.cache "hit"
+        end
+      ensure
+        AbstractBuilder.cache_store! AbstractBuilder::NullCache.new
+      end
+    end
+  end
+
   describe "#set!" do
     it "sets the key and value" do
       subject.set! :key, "value"
@@ -177,6 +217,68 @@ RSpec.describe AbstractBuilder do
         )
       end
     end
+
+    context "using cache store" do
+      it "inherits the parent cache store" do
+        subject.cache_store! NaiveCache.new
+
+        subject.cache! :outside_cache_key do |builder|
+          builder.outside_cache "hit"
+        end
+
+        subject.cache! :outside_cache_key do |builder|
+          builder.outside_cache "miss"
+        end
+
+        subject.block! :meta do |meta|
+          meta.cache! :inside_cache_key do |builder|
+            builder.inside_cache "hit"
+          end
+
+          meta.cache! :inside_cache_key do |builder|
+            builder.inside_cache "miss"
+          end
+        end
+
+        expect(subject.data!).to eq(
+          outside_cache: "hit",
+          meta: {
+            inside_cache: "hit"
+          }
+        )
+      end
+
+      it "do not leaks the ignore value to the parent" do
+        subject.cache_store! AbstractBuilder::NullCache.new
+
+        subject.cache! :outside_cache_key do |builder|
+          builder.outside_cache "hit"
+        end
+
+        subject.cache! :outside_cache_key do |builder|
+          builder.outside_cache "miss"
+        end
+
+        subject.block! :meta do |meta|
+          meta.cache_store! NaiveCache.new
+
+          meta.cache! :inside_cache_key do |builder|
+            builder.inside_cache "hit"
+          end
+
+          meta.cache! :inside_cache_key do |builder|
+            builder.inside_cache "miss"
+          end
+        end
+
+        expect(subject.data!).to eq(
+          outside_cache: "miss",
+          meta: {
+            inside_cache: "hit"
+          }
+        )
+      end
+    end
   end
 
   describe "#array!" do
@@ -196,6 +298,22 @@ RSpec.describe AbstractBuilder do
           { name: person.name, born: person.born }
         ]
       )
+    end
+  end
+
+  describe "#cache!" do
+    it "caches the given block" do
+      subject.cache_store! NaiveCache.new
+
+      subject.cache! :cache_key do |cache|
+        cache.cache "miss"
+      end
+
+      subject.cache! :cache_key do |cache|
+        cache.cache "hit"
+      end
+
+      expect(subject.data!).to eq(cache: "miss")
     end
   end
 

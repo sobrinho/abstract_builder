@@ -1,6 +1,13 @@
+require 'abstract_builder/null_cache'
+
 class AbstractBuilder
   @@format_key = nil
   @@ignore_value = nil
+  @@cache_store = NullCache.new
+
+  def self.cache_store!(cache_store)
+    @@cache_store = cache_store
+  end
 
   def self.format_key!(&block)
     @@format_key = block
@@ -11,9 +18,10 @@ class AbstractBuilder
   end
 
   def initialize
-    @stack = []
     @format_key = @@format_key
     @ignore_value = @@ignore_value
+    @cache_store = @@cache_store
+    @stack = []
   end
 
   def format_key!(&block)
@@ -22,6 +30,10 @@ class AbstractBuilder
 
   def ignore_value!(&block)
     @ignore_value = block
+  end
+
+  def cache_store!(cache_store)
+    @cache_store = cache_store
   end
 
   def set!(key, value)
@@ -56,6 +68,16 @@ class AbstractBuilder
     end
 
     set! key, values
+  end
+
+  def cache!(key, options = nil, &block)
+    value = @cache_store.fetch([:abstract_builder, :v1, *key], options) do
+      builder = _inherit
+      block.call(builder)
+      builder.data!
+    end
+
+    merge! value
   end
 
   def data!
@@ -112,6 +134,7 @@ class AbstractBuilder
     builder = self.class.new
     builder.format_key!(&@format_key)
     builder.ignore_value!(&@ignore_value)
+    builder.cache_store!(@cache_store)
     builder
   end
 
