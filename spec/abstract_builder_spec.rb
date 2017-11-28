@@ -240,7 +240,7 @@ RSpec.describe AbstractBuilder do
         subject.people people, invalid_option: true do |builder, person|
           builder.name person.name
         end
-      }.to raise_error(ArgumentError, /Expected 1 argument without a block, 0 arguments with a block or 1 argument with a block.+Received 2 arguments with a block./m)
+      }.to raise_error(ArgumentError, /Expected 1 argument without a block, 0 arguments with a block or 1 argument with a block.+Received `people' with 2 arguments with a block./m)
     end
   end
 

@@ -97,7 +97,7 @@ class AbstractBuilder
               comment_builder.content comment.content
             end
 
-        Received #{args.length - 1} argument#{'s' if args.length > 2} #{block ? "with a block" : "without a block"}.
+        Received `#{args[0]}' with #{args.length - 1} argument#{'s' if args.length > 2} #{block ? "with a block" : "without a block"}.
       EOF
     end
   end
