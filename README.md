@@ -100,12 +100,28 @@ builder.data!
 }
 ```
 
-Since the AbstractBuilder is abstract to the data protocol, you may serialize the result into any protocol you want:
+Since the AbstractBuilder is abstract to the data protocol, you may serialize the result into any protocol you want, like JSON:
 
 ```ruby
 JSON.dump(builder.data!)
-YAML.dump(builder.data!)
-MessagePack.pack(builder.data!)
+```
+
+Be aware that if you are doing this over and over again, you can inherit from AbstractBuilder to DRY:
+
+```ruby
+class MyBuilder < AbstractBuilder
+  def to_json
+    JSON.dump(data!)
+  end
+
+  def to_yaml
+    YAML.dump(data!)
+  end
+
+  def to_msgpack
+    MessagePack.pack(data!)
+  end
+end
 ```
 
 ## Development
