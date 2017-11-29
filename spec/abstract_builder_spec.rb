@@ -150,6 +150,13 @@ RSpec.describe AbstractBuilder do
       expect(subject.data!).to eq(meta: { key: "value" })
     end
 
+    it "skips if the block result is empty" do
+      subject.block! :meta do |_meta|
+      end
+
+      expect(subject.data!).to eq({})
+    end
+
     context "using format key" do
       it "inherits the parent format key" do
         subject.format_key! { |key| key.upcase }

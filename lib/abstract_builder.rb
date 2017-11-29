@@ -60,7 +60,7 @@ class AbstractBuilder
     block.call(builder)
     value = builder.data!
 
-    set! key, value
+    set! key, value unless value.empty?
   end
 
   def array!(key, collection, &block)
