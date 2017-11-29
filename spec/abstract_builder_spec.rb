@@ -52,7 +52,7 @@ RSpec.describe AbstractBuilder do
     it "caches using the given cache store" do
       subject.cache_store! cache_store
 
-      expect(cache_store).to receive(:fetch_multi).with("abstract_builder/v1/cache_key", {}).and_call_original
+      expect(cache_store).to receive(:fetch_multi).with([:abstract_builder, :v1, :cache_key], {}).and_call_original
 
       subject.cache! :cache_key do |builder|
         builder.cache "hit"
@@ -64,7 +64,7 @@ RSpec.describe AbstractBuilder do
     it "caches using the given options" do
       subject.cache_store! cache_store
 
-      expect(cache_store).to receive(:fetch_multi).with("abstract_builder/v1/cache_key", option: true).and_call_original
+      expect(cache_store).to receive(:fetch_multi).with([:abstract_builder, :v1, :cache_key], option: true).and_call_original
 
       subject.cache! :cache_key, option: true do |builder|
         builder.cache "hit"
@@ -77,7 +77,7 @@ RSpec.describe AbstractBuilder do
       begin
         AbstractBuilder.cache_store! cache_store
 
-        expect(cache_store).to receive(:fetch_multi).with("abstract_builder/v1/cache_key", {}).and_call_original
+        expect(cache_store).to receive(:fetch_multi).with([:abstract_builder, :v1, :cache_key], {}).and_call_original
 
         subject.cache! :cache_key do |builder|
           builder.cache "hit"

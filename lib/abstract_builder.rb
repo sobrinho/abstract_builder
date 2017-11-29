@@ -140,8 +140,8 @@ class AbstractBuilder
     builder
   end
 
-  def _compute_cache_key(key)
-    [:abstract_builder, :v1, *key].join("/".freeze)
+  def _compute_cache_key(cache_key)
+    [:abstract_builder, :v1, cache_key]
   end
 
   def _ignore_value?(value)
